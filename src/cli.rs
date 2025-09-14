@@ -28,8 +28,8 @@ enum Chooser {
 }
 
 impl ParcelCLI {
-    pub fn run(&self) -> io::Result<()> {
-        self.command.run(self.config.as_ref())
+    pub fn run(&self) -> anyhow::Result<()> {
+        self.command.run(Path::new(&self.config))
     }
 }
 
@@ -64,14 +64,14 @@ enum ParcelCommands {
 }
 
 impl ParcelCommands {
-    pub fn run(&self, config_path: &Path) -> io::Result<()> {
-        let config = ParcelConfig::load(config_path).unwrap();
+    pub fn run(&self, config_path: &Path) -> anyhow::Result<()> {
+        let config = ParcelConfig::load(config_path)?;
         match self {
             Self::Open { name } => Self::open(&config, name)?,
             Self::Choose { chooser, multi } => match chooser {
-                Chooser::Fzf => utils::choose_fzf(config_path.to_str().unwrap(), *multi)?,
+                Chooser::Fzf => utils::choose_fzf(config_path, *multi)?,
                 #[cfg(feature = "dialog")]
-                Chooser::Dialoguer => utils::choose(config_path.to_str().unwrap())?,
+                Chooser::Dialoguer => utils::choose(config_path)?,
             },
 
             #[cfg(feature = "json")]
@@ -88,16 +88,16 @@ impl ParcelCommands {
         Ok(())
     }
 
-    fn open(config: &ParcelConfig, name: &str) -> io::Result<()> {
+    fn open(config: &ParcelConfig, name: &str) -> anyhow::Result<()> {
         config
             .parcels
             .get(name)
             .ok_or_else(|| {
-                io::Error::other(format!(
+                anyhow::anyhow!(
                     "Parcel `{}` not found. Available parcels: {}",
                     name,
                     utils::available_parcels(config)
-                ))
+                )
             })?
             .iter()
             .map(Entry::open)
@@ -109,18 +109,18 @@ impl ParcelCommands {
         Ok(())
     }
 
-    fn list_parcel(config: &ParcelConfig, name: &str) -> io::Result<()> {
+    fn list_parcel(config: &ParcelConfig, name: &str) -> anyhow::Result<()> {
         if let Some(entries) = config.parcels.get(name) {
             for entry in entries {
                 println!("- {}", entry);
             }
             Ok(())
         } else {
-            Err(io::Error::other(format!(
+            anyhow::bail!(
                 "Parcel `{}` not found. Available parcels: {}",
                 name,
                 utils::available_parcels(config)
-            )))
+            );
         }
     }
 }
@@ -152,8 +152,8 @@ mod utils {
     }
 
     #[cfg(feature = "dialog")]
-    pub fn choose(config_path: &str) -> io::Result<()> {
-        let config = ParcelConfig::load(config_path).unwrap();
+    pub fn choose(config_path: &Path) -> anyhow::Result<()> {
+        let config = ParcelConfig::load(config_path)?;
         let parcels = config.parcels.keys().collect::<Vec<_>>();
         if parcels.is_empty() {
             eprintln!("No parcels available. Please add parcels to the configuration file.");
@@ -175,9 +175,9 @@ mod utils {
         Ok(())
     }
 
-    pub fn choose_fzf(config_path: &str, multi: bool) -> io::Result<()> {
+    pub fn choose_fzf(config_path: &Path, multi: bool) -> anyhow::Result<()> {
         let current_exe = env::current_exe()?;
-        let config = ParcelConfig::load(config_path).unwrap();
+        let config = ParcelConfig::load(config_path)?;
         let parcels = config.parcels.keys().collect::<Vec<_>>();
         if parcels.is_empty() {
             eprintln!("No parcels available. Please add parcels to the configuration file.");
@@ -205,7 +205,7 @@ mod utils {
             .arg(format!(
                 "sh -c '{} --config {} list \"$1\"' sh {}",
                 current_exe.to_string_lossy(),
-                config_path,
+                config_path.as_os_str().to_string_lossy(),
                 "{}"
             ))
             .stdin(Stdio::piped())
@@ -235,7 +235,7 @@ mod utils {
                     eprintln!("No parcel selected.");
                     Ok(())
                 }
-                _ => Err(io::Error::other("fzf command failed")),
+                _ => anyhow::bail!("fzf failed with status: {}", output.status),
             }
         }
     }

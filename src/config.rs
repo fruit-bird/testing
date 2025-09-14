@@ -12,6 +12,7 @@ use url::Url;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ParcelConfig {
+    #[serde(flatten)]
     pub parcels: HashMap<String, Vec<Entry>>,
 }
 
@@ -32,9 +33,11 @@ impl ParcelConfig {
 /// Could be the name of an application, a file path, a URL, or a shell command.
 ///
 /// - File paths are prefixed with `fs:`
-/// - Application names have no prefix, and are opened with the `open` command on macOS
-/// - URLs are automatically detected by the `open` command, and can be prefixed with `http:`, `https:`, or no prefix at all (example.com)
-/// - Shell commands are prefixed with `sh:`
+/// - Application names have no prefix,
+/// and are opened with the `open` command on macOS, `xdg-open` on Linux, and `start` on Windows.
+/// - URLs are automatically detected by the `open` command,
+/// and can be prefixed with `http:`, `https:`
+// or no prefix at all (example.com)
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
 pub enum Entry {

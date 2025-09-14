@@ -1,4 +1,6 @@
 #![feature(if_let_guard, string_remove_matches, str_as_str)]
+#![forbid(unsafe_code, clippy::unwrap_used, clippy::expect_used)]
+
 mod cli;
 mod config;
 

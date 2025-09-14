@@ -15,6 +15,6 @@ shellexpand = "3.1.1"
 url = { version = "2.5.7", features = ["serde"] }
 
 [features]
-default = []
+default = ["json", "dialog"]
 json = ["dep:serde_json"]
 dialog = ["dep:dialoguer"]

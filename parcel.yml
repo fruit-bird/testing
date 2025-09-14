@@ -1,9 +1,7 @@
-# entries are opened in the order they are listed
-parcels:
-  anime:
+anime:
   - Sequel
   - IINA
   - fs:~/Movies/Anime
-  language-learning:
+language-learning:
   - Obsidian
   - Anki
