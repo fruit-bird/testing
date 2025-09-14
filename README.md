@@ -3,3 +3,4 @@
 - [x] ability to open true path
 - [ ] raycast extension baby
 - [ ] ability to open/close multiple parcels at once
+s
