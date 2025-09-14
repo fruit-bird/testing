@@ -9,9 +9,6 @@ use clap::Parser;
 
 use crate::cli::ParcelCLI;
 
-#[cfg(not(target_os = "macos"))]
-compile_error!("Parcel is currently only supported on macOS.");
-
 fn main() -> ExitCode {
     let cli = ParcelCLI::parse();
 
