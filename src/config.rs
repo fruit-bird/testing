@@ -3,10 +3,12 @@ use std::{
     fmt::Display,
     io,
     path::{Path, PathBuf},
+    process::Output,
 };
 
 use config::{Config, ConfigError, File, FileFormat};
 use serde::{Deserialize, Serialize};
+use std::process::Command;
 use url::Url;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -46,13 +48,15 @@ pub enum Entry {
 }
 
 impl Entry {
+    #[cfg(target_os = "macos")]
     /// Open the entry using the appropriate method based on its type.
-    pub fn open(&self) -> io::Result<()> {
-        match self {
-            Self::App(app) => open::that_detached(app),
-            Self::File(path_buf) => open::that_detached(path_buf),
-            Self::Url(url) => open::that_detached(url.as_str()),
-        }
+    pub fn open(&self) -> io::Result<Output> {
+        let output = match self {
+            Self::App(app) => Command::new("open").arg("-a").arg(app).output()?,
+            Self::File(path_buf) => Command::new("open").arg(path_buf).output()?,
+            Self::Url(url) => Command::new("open").arg(url.as_str()).output()?,
+        };
+        Ok(output)
     }
 }
 
