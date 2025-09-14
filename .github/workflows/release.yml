@@ -99,14 +99,14 @@ jobs:
         run: |
           rustup target add aarch64-pc-windows-msvc
 
-      - name: Generate Completion Scripts
-        run: |
-          set -euxo pipefail
-          cargo build
-          mkdir -p completions
-          for shell in bash elvish fish nu powershell zsh; do
-            ./target/debug/kozutsumi completions $shell > completions/kozutsumi.$shell
-          done
+      # - name: Generate Completion Scripts
+      #   run: |
+      #     set -euxo pipefail
+      #     cargo build
+      #     mkdir -p completions
+      #     for shell in bash elvish fish nu powershell zsh; do
+      #       ./target/debug/kozutsumi completions $shell > completions/kozutsumi.$shell
+      #     done
 
       - name: Package
         id: package
