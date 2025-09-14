@@ -3,21 +3,18 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Release tag"
-        required: true
+      - "v*"  # Runs only when you push a tag like v1.0.0
 
 jobs:
   release:
     runs-on: macos-latest
 
     steps:
+      # 1. Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2. Install Rust Nightly
       - name: Install Rust Nightly
         uses: actions-rs/toolchain@v1
         with:
@@ -25,19 +22,26 @@ jobs:
           target: aarch64-apple-darwin
           override: true
 
-      - name: Install required dependencies
+      # 3. Ensure the target is installed
+      - name: Add target
         run: rustup target add aarch64-apple-darwin
 
+      # 4. Build the Rust project for the target
       - name: Build release
         run: cargo build --release --target aarch64-apple-darwin
 
-      - name: Prepare release binary
+      # 5. Prepare release directory
+      - name: Prepare release artifact
         run: |
-          mkdir -p bin
-          cp target/aarch64-apple-darwin/release/kozutsumi bin/
+          mkdir -p release
+          cp target/aarch64-apple-darwin/release/kozutsumi release/
+          cd release
+          zip -r kozutsumi-${GITHUB_REF_NAME#refs/tags/}-aarch64-darwin.zip kozutsumi
 
+      # 6. Create GitHub Release with artifact
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          artifacts: bin/kozutsumi
+          artifacts: release/kozutsumi-${{ github.ref_name#refs/tags/ }}-aarch64-darwin.zip
+          generateReleaseNotes: true
