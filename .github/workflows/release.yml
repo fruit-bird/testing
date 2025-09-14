@@ -74,6 +74,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Install Rust Nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+
       - name: Install AArch64 Toolchain
         if: ${{ matrix.target == 'aarch64-unknown-linux-musl' }}
         run: |
@@ -91,7 +99,7 @@ jobs:
         run: |
           rustup target add aarch64-pc-windows-msvc
 
-      - name: Generate Completion Scripts and Manpage
+      - name: Generate Completion Scripts
         run: |
           set -euxo pipefail
           cargo build
