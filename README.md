@@ -1,0 +1,5 @@
+- [ ] ability to both open and close the parcels
+- [ ] ability to run shell commands before and after opening/closing the parcels??
+- [x] ability to open true path
+- [ ] raycast extension baby
+- [ ] ability to open/close multiple parcels at once
