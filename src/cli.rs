@@ -102,10 +102,8 @@ impl ParcelCommands {
             .iter()
             .map(Entry::open)
             .filter_map(Result::ok)
-            .filter(|output| !output.status.success())
-            .for_each(|output| {
-                eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr).trim())
-            });
+            .for_each(|_| { /* Successfully opened an entry */ });
+
         Ok(())
     }
 

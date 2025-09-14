@@ -1,4 +1,3 @@
-use std::process::{Command, Output};
 use std::{
     collections::HashMap,
     fmt::Display,
@@ -34,10 +33,10 @@ impl ParcelConfig {
 ///
 /// - File paths are prefixed with `fs:`
 /// - Application names have no prefix,
-/// and are opened with the `open` command on macOS, `xdg-open` on Linux, and `start` on Windows.
+///   and are opened with the `open` command on macOS, `xdg-open` on Linux, and `start` on Windows.
 /// - URLs are automatically detected by the `open` command,
-/// and can be prefixed with `http:`, `https:`
-// or no prefix at all (example.com)
+///   and can be prefixed with `http:`, `https:`
+//    , or no prefix at all (example.com)
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
 pub enum Entry {
@@ -48,15 +47,12 @@ pub enum Entry {
 
 impl Entry {
     /// Open the entry using the appropriate method based on its type.
-    #[cfg(target_os = "macos")]
-    pub fn open(&self) -> io::Result<Output> {
-        let output = match self {
-            Self::App(name) => Command::new("open").args(["-a", name]).output()?,
-            Self::File(name) => Command::new("open").arg(name).output()?,
-            Self::Url(url) => Command::new("open").arg(url.as_str()).output()?,
-        };
-
-        Ok(output)
+    pub fn open(&self) -> io::Result<()> {
+        match self {
+            Self::App(app) => open::that_detached(app),
+            Self::File(path_buf) => open::that_detached(path_buf),
+            Self::Url(url) => open::that_detached(url.as_str()),
+        }
     }
 }
 
