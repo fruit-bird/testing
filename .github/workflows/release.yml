@@ -29,10 +29,10 @@ jobs:
       - name: Prepare release binary
         run: |
           mkdir -p bin
-          cp target/aarch64-apple-darwin/release/your_binary_name bin/
+          cp target/aarch64-apple-darwin/release/kozutsumi bin/
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          artifacts: bin/your_binary_name
+          artifacts: bin/kozutsumi
