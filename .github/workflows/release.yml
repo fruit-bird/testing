@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-latest
@@ -49,6 +52,8 @@ jobs:
           git config user.email github-actions@github.com
           git tag -f latest ${{ github.sha }}
           git push origin refs/tags/latest --force
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
