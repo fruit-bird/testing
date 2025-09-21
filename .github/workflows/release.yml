@@ -1,4 +1,4 @@
-name: Release
+name: Release via Nix
 
 on:
   push:
@@ -16,20 +16,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Rust Nightly
-        uses: actions-rs/toolchain@v1
+      - name: Install Nix
+        uses: cachix/install-nix-action@v26
         with:
-          toolchain: nightly
-          target: aarch64-apple-darwin
-          override: true
+          nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Build
-        run: cargo build --release --target aarch64-apple-darwin
-
-      - name: Prepare artifact
+      - name: Build package
         run: |
+          nix build .#kozutsumi
           mkdir -p dist
-          cp target/aarch64-apple-darwin/release/kozutsumi dist/
+          cp result/bin/kozutsumi dist/
           cd dist
           tar -czf kozutsumi-aarch64-apple-darwin.tar.gz kozutsumi
           rm kozutsumi
