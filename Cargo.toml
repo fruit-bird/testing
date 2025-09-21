@@ -2,6 +2,7 @@
 name = "kozutsumi"
 version = "0.1.1"
 edition = "2024"
+description = "A single tool for opening groups of applications, files, folders, and URLs"
 
 [dependencies]
 anyhow = "1.0.100"
@@ -15,6 +16,6 @@ shellexpand = "3.1.1"
 url = { version = "2.5.7", features = ["serde"] }
 
 [features]
-default = ["json"]
+default = []
 json = ["dep:serde_json"]
 dialog = ["dep:dialoguer"]
