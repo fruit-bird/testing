@@ -2,12 +2,16 @@
 
 mod cli;
 mod config;
+mod utils;
 
 use std::process::ExitCode;
 
 use clap::Parser;
 
 use crate::cli::ParcelCLI;
+
+#[cfg(not(target_os = "macos"))]
+compile_error!("This program is currently only supported on macOS.");
 
 fn main() -> ExitCode {
     let cli = ParcelCLI::parse();

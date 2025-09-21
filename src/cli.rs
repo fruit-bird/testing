@@ -1,14 +1,12 @@
-use std::{
-    io::{self, Write as _},
-    path::Path,
-};
+use std::{io, path::Path};
 
 use anyhow::Result;
 use clap::{CommandFactory as _, Parser, Subcommand, ValueEnum};
 
 use crate::config::{Entry, ParcelConfig};
+use crate::utils;
 
-/// A tool to open groups of applications, files, and URLs
+/// A tool to open groups of applications, files, folders, and URLs
 #[derive(Debug, Parser)]
 #[clap(version, author, about)]
 pub struct ParcelCLI {
@@ -20,7 +18,7 @@ pub struct ParcelCLI {
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum, Default)]
-enum Chooser {
+pub enum Chooser {
     #[default]
     Fzf,
     #[cfg(feature = "dialog")]
@@ -34,15 +32,15 @@ impl ParcelCLI {
 }
 
 #[derive(Debug, Subcommand)]
-enum ParcelCommands {
+pub enum ParcelCommands {
     /// Opens a parcel by name
     Open { name: String },
     /// Opens a parcel by choosing from a list
     Choose {
         /// Choose a parcel to open using a fuzzy finder
-        #[clap(long, value_enum, default_value_t = Chooser::default())]
+        #[clap(long, value_enum, default_value_t)]
         chooser: Chooser,
-        /// Allow multiple selections
+        /// Allow multiple selections (only with fzf)
         #[clap(long, default_value_t = false)]
         multi: bool,
     },
@@ -71,7 +69,7 @@ impl ParcelCommands {
             Self::Choose { chooser, multi } => match chooser {
                 Chooser::Fzf => utils::choose_fzf(config_path, *multi)?,
                 #[cfg(feature = "dialog")]
-                Chooser::Dialoguer => utils::choose(config_path)?,
+                Chooser::Dialoguer => utils::choose(config_path, *multi)?,
             },
 
             #[cfg(feature = "json")]
@@ -119,122 +117,6 @@ impl ParcelCommands {
                 name,
                 utils::available_parcels(config)
             );
-        }
-    }
-}
-
-mod utils {
-    use std::{
-        env,
-        process::{Command, Stdio},
-        vec,
-    };
-
-    use super::*;
-
-    pub fn default_config() -> String {
-        let base = shellexpand::tilde("~/.config/kozutsumi/parcel");
-        let yml = format!("{}.yml", base);
-        let yaml = format!("{}.yaml", base);
-
-        if Path::new(&yml).exists() { yml } else { yaml }
-    }
-
-    pub fn available_parcels(config: &ParcelConfig) -> String {
-        config
-            .parcels
-            .keys()
-            .cloned()
-            .collect::<Vec<_>>()
-            .join(", ")
-    }
-
-    #[cfg(feature = "dialog")]
-    pub fn choose(config_path: &Path) -> anyhow::Result<()> {
-        let config = ParcelConfig::load(config_path)?;
-        let parcels = config.parcels.keys().collect::<Vec<_>>();
-        if parcels.is_empty() {
-            eprintln!("No parcels available. Please add parcels to the configuration file.");
-            return Ok(());
-        }
-        let selection =
-            dialoguer::FuzzySelect::with_theme(&dialoguer::theme::ColorfulTheme::default())
-                .with_prompt("Select a parcel to open")
-                .items(&parcels)
-                .default(0)
-                .interact_opt()?;
-
-        if let Some(index) = selection {
-            let name = parcels[index].to_string();
-            ParcelCommands::Open { name }.run(config_path.as_ref())?;
-        } else {
-            println!("No parcel selected.");
-        }
-        Ok(())
-    }
-
-    pub fn choose_fzf(config_path: &Path, multi: bool) -> anyhow::Result<()> {
-        let current_exe = env::current_exe()?;
-        let config = ParcelConfig::load(config_path)?;
-        let parcels = config.parcels.keys().collect::<Vec<_>>();
-        if parcels.is_empty() {
-            eprintln!("No parcels available. Please add parcels to the configuration file.");
-            return Ok(());
-        }
-
-        let mut args = vec![
-            "--preview-window=right:60%:wrap",
-            "--layout=reverse",
-            "--bind=tab:down,shift-tab:up",
-            "--cycle",
-            "--no-sort",
-            "--tmux=center,70%,40%",
-        ];
-        if multi {
-            args.extend([
-                "--multi",
-                "--bind=ctrl-a:select-all",
-                "--bind=space:toggle+down",
-            ]);
-        }
-        let fzf = Command::new("fzf")
-            .args(args)
-            .arg("--preview")
-            .arg(format!(
-                "sh -c '{} --config {} list \"$1\"' sh {}",
-                current_exe.to_string_lossy(),
-                config_path.as_os_str().to_string_lossy(),
-                "{}"
-            ))
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .spawn()?;
-
-        let mut stdin = fzf.stdin.as_ref().unwrap();
-        for parcel in &parcels {
-            writeln!(stdin, "{}", parcel)?;
-        }
-
-        let output = fzf.wait_with_output()?;
-        if output.status.success() {
-            let selection = String::from_utf8_lossy(&output.stdout);
-            let name = selection.trim().to_string();
-            if !name.is_empty() {
-                ParcelCommands::Open { name }.run(config_path.as_ref())?;
-            } else {
-                eprintln!("No parcel selected.");
-            }
-            Ok(())
-        } else {
-            match output.status.code() {
-                Some(130) | Some(1) => {
-                    // 130: User cancelled (Ctrl-C)
-                    //   1: No match found
-                    eprintln!("No parcel selected.");
-                    Ok(())
-                }
-                _ => anyhow::bail!("fzf failed with status: {}", output.status),
-            }
         }
     }
 }

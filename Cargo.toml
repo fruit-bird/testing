@@ -4,17 +4,17 @@ version = "0.1.1"
 edition = "2024"
 
 [dependencies]
-anyhow = "1.0.99"
-clap = { version = "4.5.47", features = ["derive"] }
-clap_complete = "4.5.57"
-config = { version = "0.15.15", features = ["yaml"], default-features = false }
+anyhow = "1.0.100"
+clap = { version = "4.5.48", features = ["derive"] }
+clap_complete = "4.5.58"
+config = { version = "0.15.16", features = ["yaml"], default-features = false }
 dialoguer = { version = "0.12.0", features = ["fuzzy-select"], optional = true }
-serde = { version = "1.0.221", features = ["derive"] }
-serde_json = { version = "1.0.144", optional = true }
+serde = { version = "1.0.226", features = ["derive"] }
+serde_json = { version = "1.0.145", optional = true }
 shellexpand = "3.1.1"
 url = { version = "2.5.7", features = ["serde"] }
 
 [features]
-default = ["json", "dialog"]
+default = ["json"]
 json = ["dep:serde_json"]
 dialog = ["dep:dialoguer"]
