@@ -3,7 +3,7 @@ name = "kozutsumi"
 authors = ["fruit-bird"]
 version = "0.1.2"
 description = "A single tool for opening groups of applications, files, folders, and URLs"
-repository = "https://github.com/fruit-bird/kozutsumi"
+repository = "https://github.com/fruit-bird/testing"
 edition = "2024"
 
 [dependencies]
