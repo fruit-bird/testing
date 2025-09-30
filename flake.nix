@@ -8,7 +8,7 @@
 
   outputs =
     {
-      self,
+      # self,
       nixpkgs,
       flake-utils,
     }:
