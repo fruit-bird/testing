@@ -2,8 +2,8 @@ name: Release via Nix
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - "*.*.*"
 
 permissions:
   contents: write
