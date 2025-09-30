@@ -1,7 +1,7 @@
 [package]
 name = "kozutsumi"
 authors = ["fruit-bird"]
-version = "0.1.3"
+version = "0.1.4"
 description = "A single tool for opening groups of applications, files, folders, and URLs"
 repository = "https://github.com/fruit-bird/testing"
 edition = "2024"
