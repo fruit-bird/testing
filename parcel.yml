@@ -1,7 +1,9 @@
 anime:
   - Sequel
   - IINA
-  - fs:~/Movies/Anime
+  - ~/Movies/Anime
+  - sh:osascript -e 'display notification "Hello from me" with title "Hello"'
+  - raycast://confetti
 language-learning:
   - Obsidian
   - Anki

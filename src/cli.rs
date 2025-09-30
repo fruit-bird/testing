@@ -1,7 +1,7 @@
-use std::{io, path::Path};
+use std::path::Path;
 
 use anyhow::Result;
-use clap::{CommandFactory as _, Parser, Subcommand, ValueEnum};
+use clap::{Parser, Subcommand, ValueEnum};
 
 use crate::config::{Entry, ParcelConfig};
 use crate::utils;
@@ -40,8 +40,8 @@ pub enum ParcelCommands {
         /// Choose a parcel to open using a fuzzy finder
         #[clap(long, value_enum, default_value_t)]
         chooser: Chooser,
-        /// Allow multiple selections (only with fzf)
-        #[clap(long, default_value_t = false)]
+        /// Allow multiple selections
+        #[clap(long, default_value_t)]
         multi: bool,
     },
     /// Lists all available parcels
@@ -53,6 +53,7 @@ pub enum ParcelCommands {
         #[clap(long, default_value = "false")]
         json: bool,
     },
+    #[cfg(feature = "completions")]
     /// Generate shell completions
     Completions {
         /// The shell to generate the completions for
@@ -77,10 +78,11 @@ impl ParcelCommands {
             Self::List { name: Some(n), .. } => Self::list_parcel(&config, n)?,
             Self::List { .. } => println!("{}", config),
 
+            #[cfg(feature = "completions")]
             Self::Completions { shell } => {
-                let mut cmd = ParcelCLI::command();
+                let mut cmd = <ParcelCLI as clap::CommandFactory>::command();
                 let name = cmd.get_name().to_string();
-                clap_complete::generate(*shell, &mut cmd, name, &mut io::stdout());
+                clap_complete::generate(*shell, &mut cmd, name, &mut std::io::stdout());
             }
         }
         Ok(())

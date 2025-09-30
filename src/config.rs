@@ -33,18 +33,43 @@ impl ParcelConfig {
 /// Representation of the type of the entry in each parcel.
 /// Could be the name of an application, a file path, a URL, or a shell command.
 ///
-/// - File paths are prefixed with `fs:`
-/// - Application names have no prefix,
-///   and are opened with the `open` command on macOS, `xdg-open` on Linux, and `start` on Windows.
-/// - URLs are automatically detected by the `open` command,
-///   and can be prefixed with `http:`, `https:`
+/// - File paths are prefixed with `~` or `/`
+/// - Application names have no prefix
+/// - URLs can be prefixed with `http:`, `https:`
 //    , or no prefix at all (example.com)
+/// - Shell commands are prefixed with `sh:`
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
 pub enum Entry {
+    /// An application name to be opened.
+    ///
+    /// - On macOS, you can just specify the name of the application (e.g., Safari)
     App(String),
+    /// A file path to be opened.
+    /// Must be prefixed with `~` or `/`.
+    ///
+    /// # Examples
+    /// - `/Users/username/Documents` (absolute path)
+    /// - `~/Documents` (home directory)
+    ///
+    /// If the path is a directory, it will be opened in the default file manager.
+    /// If the path is a file, it will be opened with the default application for that file type.
     File(PathBuf),
+    /// A URL to be opened.
+    ///
+    /// - This can be any valid URL, such as `http://example.com`,
+    ///   `https://example.com`, or `ftp://example.com`...
+    /// - This also supports URIs, allowing you to execute
+    ///   specific actions within apps (e.g., `spotify://`, `raycast://`).
     Url(Url),
+    /// A shell command to be executed.
+    /// Must be prefixed with `sh:`.
+    ///
+    /// The command will be executed using the `sh` shell.
+    ///
+    /// **USE WITH CAUTION, AS THIS CAN EXECUTE ANY COMMAND ON YOUR SYSTEM.**
+    #[cfg(feature = "shell")]
+    Shell(String),
 }
 
 impl Entry {
@@ -55,6 +80,8 @@ impl Entry {
             Self::App(app) => Command::new("open").arg("-a").arg(app).output()?,
             Self::File(path_buf) => Command::new("open").arg(path_buf).output()?,
             Self::Url(url) => Command::new("open").arg(url.as_str()).output()?,
+            #[cfg(feature = "shell")]
+            Self::Shell(cmd) => Command::new("sh").arg("-c").arg(cmd).output()?,
         };
         Ok(output)
     }
@@ -66,9 +93,11 @@ impl<'de> Deserialize<'de> for Entry {
         D: serde::Deserializer<'de>,
     {
         match String::deserialize(deserializer)? {
-            s if s.starts_with("fs:") => Ok(Self::File(PathBuf::from(
-                shellexpand::tilde(&s[3..]).into_owned(),
-            ))),
+            #[cfg(feature = "shell")]
+            s if s.starts_with("sh:") => Ok(Self::Shell(s[3..].to_string())),
+            s if s.starts_with(['/', '~']) => {
+                Ok(Self::File(shellexpand::tilde(&s).into_owned().into()))
+            }
             s if let Ok(url) = Url::parse(&s) => Ok(Self::Url(url)),
             s => Ok(Self::App(s)),
         }
@@ -81,6 +110,8 @@ impl Display for Entry {
             Self::App(name) => write!(f, "{}", name),
             Self::File(path) => write!(f, "{}", path.to_string_lossy()),
             Self::Url(url) => write!(f, "{}", url),
+            #[cfg(feature = "shell")]
+            Self::Shell(cmd) => write!(f, "{}", cmd),
         }
     }
 }

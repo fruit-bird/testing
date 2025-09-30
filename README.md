@@ -71,6 +71,8 @@ language-learning:
   - https://www.duolingo.com
 ```
 
+> App names are only supported on macOS. For other operating systems, use paths to the executable.
+
 Then you can open a parcel by running:
 ```sh
 kozutsumi open language-learning
